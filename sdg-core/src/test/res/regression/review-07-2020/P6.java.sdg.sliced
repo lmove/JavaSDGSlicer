@@ -1,5 +1,9 @@
 public class Bucles {
 
+    public static void main(String[] args) {
+        int x = 2;
+    }
+
     static void metodoGeneradorExcepciones(int x) throws Exception {
         if (x == 0)
             throw new ExceptionA();
