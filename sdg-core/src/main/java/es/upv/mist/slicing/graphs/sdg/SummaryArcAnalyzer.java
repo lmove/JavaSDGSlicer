@@ -4,6 +4,8 @@ import com.github.javaparser.ast.body.CallableDeclaration;
 import es.upv.mist.slicing.graphs.BackwardDataFlowAnalysis;
 import es.upv.mist.slicing.graphs.CallGraph;
 import es.upv.mist.slicing.nodes.SyntheticNode;
+import es.upv.mist.slicing.nodes.exceptionsensitive.ExitNode;
+import es.upv.mist.slicing.nodes.exceptionsensitive.ReturnNode;
 import es.upv.mist.slicing.nodes.io.ActualIONode;
 import es.upv.mist.slicing.nodes.io.CallNode;
 import es.upv.mist.slicing.nodes.io.FormalIONode;
@@ -49,6 +51,11 @@ public class SummaryArcAnalyzer extends BackwardDataFlowAnalysis<CallGraph.Verte
                 .map(OutputNode.class::cast)
                 .filter(on -> on.getAstNode().equals(declaration))
                 .forEach(set::add);
+        sdg.vertexSet().stream()
+                .filter(ExitNode.class::isInstance)
+                .map(ExitNode.class::cast)
+                .filter(on -> on.getAstNode().equals(declaration))
+                .forEach(set::add);
         return set;
     }
 
@@ -87,21 +94,23 @@ public class SummaryArcAnalyzer extends BackwardDataFlowAnalysis<CallGraph.Verte
                 .findAny();
     }
 
-    protected Optional<SyntheticNode<?>> getActualOut(CallGraph.Edge<?> edge, SyntheticNode<CallableDeclaration<?>> formalOut) {
+    protected Optional<? extends SyntheticNode<?>> getActualOut(CallGraph.Edge<?> edge, SyntheticNode<CallableDeclaration<?>> formalOut) {
         if (formalOut instanceof FormalIONode)
-            return Optional.ofNullable(getActualOut(edge, (FormalIONode) formalOut));
+            return getActualOut(edge, (FormalIONode) formalOut);
         if (formalOut instanceof OutputNode)
-            return Optional.ofNullable(getActualOut(edge));
+            return Optional.of(getActualOut(edge));
+        if (formalOut instanceof ExitNode)
+            return getReturnNode(edge, (ExitNode) formalOut);
         throw new IllegalArgumentException("invalid type");
     }
 
-    protected ActualIONode getActualOut(CallGraph.Edge<?> edge, FormalIONode formalOut) {
+    protected Optional<ActualIONode> getActualOut(CallGraph.Edge<?> edge, FormalIONode formalOut) {
         return sdg.vertexSet().stream()
                 .filter(ActualIONode.class::isInstance)
                 .map(ActualIONode.class::cast)
                 .filter(n -> n.getAstNode() == edge.getCall())
                 .filter(n -> n.matchesFormalIO(formalOut))
-                .findAny().orElse(null);
+                .findAny();
     }
 
     protected CallNode.Return getActualOut(CallGraph.Edge<?> edge) {
@@ -109,6 +118,15 @@ public class SummaryArcAnalyzer extends BackwardDataFlowAnalysis<CallGraph.Verte
                 .filter(CallNode.Return.class::isInstance)
                 .map(CallNode.Return.class::cast)
                 .filter(n -> n.getAstNode() == edge.getCall())
-                .findAny().orElse(null);
+                .findAny().orElseThrow();
+    }
+
+    protected Optional<ReturnNode> getReturnNode(CallGraph.Edge<?> edge, ExitNode exitNode) {
+        return sdg.vertexSet().stream()
+                .filter(ReturnNode.class::isInstance)
+                .map(ReturnNode.class::cast)
+                .filter(n -> n.getAstNode() == edge.getCall())
+                .filter(exitNode::matchesReturnNode)
+                .findAny();
     }
 }
