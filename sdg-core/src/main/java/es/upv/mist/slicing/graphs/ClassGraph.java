@@ -48,6 +48,9 @@ public class ClassGraph extends DirectedPseudograph<ClassGraph.Vertex, ClassGrap
     }
 
     protected Vertex findClassVertex(ResolvedReferenceType type) {
+        System.out.println(type.getQualifiedName());
+        Iterator i = vertexSet().stream()
+                .filter(v -> v.declaration.isClassOrInterfaceDeclaration()).iterator();
         return vertexSet().stream()
                 .filter(v -> v.declaration.isClassOrInterfaceDeclaration())
                 .filter(v -> ASTUtils.resolvedTypeDeclarationToResolvedType(v.declaration.asClassOrInterfaceDeclaration().resolve()).equals(type))

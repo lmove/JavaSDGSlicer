@@ -113,7 +113,7 @@ public class ESCFG extends ACFG {
             buildRootNode(callableDeclaration);
             hangingNodes.add(getRootNode());
 
-            ASTUtils.getCallableBody(callableDeclaration).accept(this, arg);
+            ASTUtils.getCallableBody(callableDeclaration).ifPresent(body -> body.accept(this, arg));  
             returnList.stream().filter(node -> !hangingNodes.contains(node)).forEach(hangingNodes::add);
             // NEW vs ACFG
             if (!exceptionSourceMap.isEmpty()) {
@@ -190,7 +190,9 @@ public class ESCFG extends ACFG {
                     .findFirst()
                     .ifPresentOrElse(
                             n -> addNonExecutableControlFlowArc(node, n),
-                            () -> {throw new IllegalStateException("A common post-dominator cannot be found for a normal exit!");});
+                            () -> {
+                                //throw new IllegalStateException("A common post-dominator cannot be found for a normal exit!");
+                                });
         }
 
         @Override

@@ -11,6 +11,7 @@ import es.upv.mist.slicing.utils.ASTUtils;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 
 /** Populates a {@link ACFG}, given one and an AST root node.
  *  @see CFGBuilder Parent class for more instructions. */
@@ -138,7 +139,7 @@ public class ACFGBuilder extends CFGBuilder {
         });
         returnList.add(node);
         clearHanging();
-        nonExecHangingNodes.add(node); // NEW vs CFG
+        nonExecHangingNodes.add(node); // NEW vs CFGs
     }
 
     // ======================================================================
@@ -150,13 +151,13 @@ public class ACFGBuilder extends CFGBuilder {
         graph.buildRootNode(callableDeclaration);
         hangingNodes.add(graph.getRootNode());
 
-        ASTUtils.getCallableBody(callableDeclaration).accept(this, arg);
+        ASTUtils.getCallableBody(callableDeclaration).ifPresent(body -> body.accept(this, arg)); 
         returnList.stream().filter(node -> !hangingNodes.contains(node)).forEach(hangingNodes::add);
         nonExecHangingNodes.add(graph.getRootNode()); // NEW vs CFG
 
         MethodExitNode exit = new MethodExitNode(callableDeclaration);
         graph.addVertex(exit);
         addMethodOutput(callableDeclaration, exit);
-        connectTo(exit);
+        connectTo(exit);    
     }
 }

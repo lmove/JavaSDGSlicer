@@ -78,7 +78,7 @@ public class ASTUtils {
     }
 
     protected static boolean resolvedParameterEquals(ResolvedParameterDeclaration p1, ResolvedParameterDeclaration p2) {
-        return p2.getType().equals(p1.getType()) && p2.getName().equals(p1.getName());
+        return p2.getType().getClass().getName().equals(p1.getType().getClass().getName()) && p2.getName().equals(p1.getName());
     }
 
     public static List<Expression> getResolvableArgs(Resolvable<? extends ResolvedMethodLikeDeclaration> call) {
@@ -91,12 +91,12 @@ public class ASTUtils {
         throw new IllegalArgumentException("Call wasn't of a compatible type!");
     }
 
-    public static BlockStmt getCallableBody(CallableDeclaration<?> callableDeclaration) {
+    public static Optional<BlockStmt> getCallableBody(CallableDeclaration<?> callableDeclaration) {
         if (callableDeclaration instanceof MethodDeclaration)
-            return ((MethodDeclaration) callableDeclaration).getBody().orElseThrow(() -> new IllegalStateException("Graph creation is not allowed for abstract or native methods!"));
+            return ((MethodDeclaration) callableDeclaration).getBody();
         if (callableDeclaration instanceof ConstructorDeclaration)
-            return ((ConstructorDeclaration) callableDeclaration).getBody();
-        throw new IllegalStateException("The method must have a body!");
+            return Optional.of(((ConstructorDeclaration) callableDeclaration).getBody());
+        return Optional.empty();
     }
 
     public static Optional<Expression> getResolvableScope(Resolvable<? extends ResolvedMethodLikeDeclaration> call) {

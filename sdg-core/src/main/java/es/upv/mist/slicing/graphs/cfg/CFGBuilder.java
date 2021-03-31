@@ -366,9 +366,9 @@ public class CFGBuilder extends VoidVisitorAdapter<Void> {
         graph.buildRootNode(callableDeclaration);
         hangingNodes.add(graph.getRootNode());
 
-        ASTUtils.getCallableBody(callableDeclaration).accept(this, arg);
+        ASTUtils.getCallableBody(callableDeclaration).ifPresent(body -> body.accept(this, arg));        
         returnList.stream().filter(node -> !hangingNodes.contains(node)).forEach(hangingNodes::add);
-
+        
         MethodExitNode exit = new MethodExitNode(callableDeclaration);
         graph.addVertex(exit);
         addMethodOutput(callableDeclaration, exit);
